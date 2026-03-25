@@ -1,24 +1,14 @@
 from fastapi import FastAPI, Form
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 import pandas as pd
+from num2words import num2words
 
 app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkc1iWTYEe46zw15JHVii4vFSaackYx-bsveBu4IBdsdtaB6zGsh7P0v0aIyWWfWas9CEUbA9VI5IK/pub?output=csv"
 
 
 def load_data():
 
-    df = pd.read_csv(CSV_URL)
+    df = pd.read_csv("data.csv")
 
     subjects = [
         "Telugu",
@@ -29,33 +19,46 @@ def load_data():
         "Social_Studies"
     ]
 
-    df[subjects] = df[subjects].apply(pd.to_numeric, errors="coerce").fillna(0)
-
     df["Total"] = df[subjects].sum(axis=1)
 
     df["Percentage"] = (df["Total"] / 600 * 100).round(2)
 
+    def result_status(row):
+
+        for sub in subjects:
+
+            if row[sub] < 35:
+                return "FAIL"
+
+        return "PASS"
+
+
+    df["Result"] = df.apply(result_status, axis=1)
+
+
     def division(total):
 
         if total >= 360:
-            return "1st Division"
+            return "FIRST DIVISION"
 
         elif total >= 300:
-            return "2nd Division"
+            return "SECOND DIVISION"
 
         elif total >= 195:
-            return "3rd Division"
+            return "THIRD DIVISION"
 
         else:
-            return "Fail"
+            return "FAIL"
+
 
     df["Division"] = df["Total"].apply(division)
 
     return df
 
 
+
 @app.get("/", response_class=HTMLResponse)
-def search_page():
+def search():
 
     return """
 
@@ -63,27 +66,29 @@ def search_page():
 
     <head>
 
-    <title>Exam Result</title>
+    <title>Student Result</title>
 
     <style>
 
     body{
     font-family:Arial;
     text-align:center;
-    margin-top:100px;
+    margin-top:120px;
     background:#f2f2f2;
     }
 
     input{
-    padding:10px;
-    width:220px;
+    padding:12px;
+    width:250px;
+    font-size:16px;
     }
 
     button{
-    padding:10px;
-    background:#3498db;
+    padding:12px;
+    background:#2c7be5;
     color:white;
     border:none;
+    font-size:16px;
     }
 
     </style>
@@ -92,15 +97,19 @@ def search_page():
 
     <body>
 
-    <h2>Exam Result Search</h2>
+    <h2>SCHOOL EXAM RESULT</h2>
 
     <form action="/result" method="post">
 
-    <input name="student_id" placeholder="Enter Roll Number" required>
+    Enter Roll Number
 
     <br><br>
 
-    <button type="submit">Search</button>
+    <input name="roll_no" required>
+
+    <br><br>
+
+    <button>Search</button>
 
     </form>
 
@@ -111,58 +120,225 @@ def search_page():
     """
 
 
+
 @app.post("/result", response_class=HTMLResponse)
-def result(student_id: int = Form(...)):
+def result(roll_no: int = Form(...)):
 
     df = load_data()
 
-    student = df[df["Student_ID"] == student_id]
+    student = df[df["Roll_NO"] == roll_no]
 
     if student.empty:
+
         return "<h3>Result not found</h3>"
 
     s = student.iloc[0]
 
+
+    subjects = [
+        ("FIRST LANGUAGE (TELUGU)", s.Telugu),
+        ("SECOND LANGUAGE (HINDI)", s.Hindi),
+        ("THIRD LANGUAGE (ENGLISH)", s.English),
+        ("MATHEMATICS", s.Mathematics),
+        ("GENERAL SCIENCE", s.Science),
+        ("SOCIAL STUDIES", s.Social_Studies)
+    ]
+
+
+    rows = ""
+
+    for subject, mark in subjects:
+
+        color = "red" if mark < 35 else "black"
+
+        rows += f"""
+
+        <tr>
+
+        <td>{subject}</td>
+
+        <td style="color:{color}">{mark}</td>
+
+        <td>{num2words(int(mark)).title()}</td>
+
+        </tr>
+
+        """
+
+
+    total_words = num2words(int(s.Total)).title()
+
+    result_color = "green" if s.Result == "PASS" else "red"
+
+
+
     return f"""
 
-    <html>
+<html>
 
-    <head>
+<head>
 
-    <style>
+<style>
 
-    body{{font-family:Arial;text-align:center;background:#f2f2f2}}
+body{{
+font-family:Arial;
+background:#f2f2f2;
+}}
 
-    table{{margin:auto;border-collapse:collapse;background:white}}
+.container{{
+width:750px;
+margin:auto;
+background:white;
+padding:40px;
+}}
 
-    td,th{{padding:10px;border:1px solid #ddd}}
+.title{{
+text-align:center;
+font-size:20px;
+font-weight:bold;
+}}
 
-    </style>
+.info{{
+margin-top:20px;
+line-height:30px;
+}}
 
-    </head>
+table{{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}}
 
-    <body>
+td,th{{
+border:1px solid black;
+padding:8px;
+}}
 
-    <h2>Student Result</h2>
+th{{
+background:#eee;
+}}
 
-    <table>
+.result{{
+text-align:center;
+margin-top:20px;
+}}
 
-    <tr><th>Roll Number</th><td>{s.Student_ID}</td></tr>
+.print-btn{{
+text-align:center;
+margin-top:25px;
+}}
 
-    <tr><th>Total</th><td>{s.Total}</td></tr>
+button{{
+padding:10px 20px;
+background:#28a745;
+color:white;
+border:none;
+cursor:pointer;
+}}
 
-    <tr><th>Percentage</th><td>{s.Percentage}%</td></tr>
+@media print {{
 
-    <tr><th>Division</th><td>{s.Division}</td></tr>
+button{{
+display:none;
+}}
 
-    </table>
+}}
 
-    <br>
+</style>
 
-    <a href="/">Search Another</a>
+</head>
 
-    </body>
+<body>
 
-    </html>
+<div class="container">
 
-    """
+<div class="title">
+
+MEMORANDUM OF SUBJECT-WISE MARKS
+
+</div>
+
+<div class="info">
+
+<b>ROLL NUMBER :</b> {s.Roll_NO} <br>
+
+<b>CANDIDATE NAME :</b> {s.Student_Name} <br>
+
+<b>SCHOOL NAME :</b> {s.School_Name} <br>
+
+<b>DATE OF BIRTH :</b> {s.Date_of_Birth}
+
+</div>
+
+
+<table>
+
+<tr>
+
+<th>SUBJECT</th>
+
+<th>MARKS IN FIGURES</th>
+
+<th>MARKS IN WORDS</th>
+
+</tr>
+
+{rows}
+
+
+<tr>
+
+<th>GRAND TOTAL</th>
+
+<th>{s.Total}</th>
+
+<th>{total_words}</th>
+
+</tr>
+
+</table>
+
+
+<div class="result">
+
+<h2 style="color:{result_color}">
+
+RESULT : {s.Result}
+
+</h2>
+
+<h3>
+
+DIVISION : {s.Division}
+
+</h3>
+
+</div>
+
+
+<div class="print-btn">
+
+<button onclick="window.print()">
+
+Print Result
+
+</button>
+
+</div>
+
+
+<br>
+
+<div style="text-align:center">
+
+<a href="/">Search Another</a>
+
+</div>
+
+</div>
+
+</body>
+
+</html>
+
+"""
