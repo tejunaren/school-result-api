@@ -1,10 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 import pandas as pd
 
 app = FastAPI()
 
-# allow dashboard access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -49,26 +49,120 @@ def load_data():
         else:
             return "Fail"
 
-
     df["Division"] = df["Total"].apply(division)
 
     return df
 
 
-@app.get("/")
-def home():
-    return {"message": "Student Result API Running"}
+@app.get("/", response_class=HTMLResponse)
+def search_page():
+
+    return """
+
+    <html>
+
+    <head>
+
+    <title>Exam Result</title>
+
+    <style>
+
+    body{
+    font-family:Arial;
+    text-align:center;
+    margin-top:100px;
+    background:#f2f2f2;
+    }
+
+    input{
+    padding:10px;
+    width:220px;
+    }
+
+    button{
+    padding:10px;
+    background:#3498db;
+    color:white;
+    border:none;
+    }
+
+    </style>
+
+    </head>
+
+    <body>
+
+    <h2>Exam Result Search</h2>
+
+    <form action="/result" method="post">
+
+    <input name="student_id" placeholder="Enter Roll Number" required>
+
+    <br><br>
+
+    <button type="submit">Search</button>
+
+    </form>
+
+    </body>
+
+    </html>
+
+    """
 
 
-# show only one student result
-@app.get("/result/{student_id}")
-def student_result(student_id: int):
+@app.post("/result", response_class=HTMLResponse)
+def result(student_id: int = Form(...)):
 
     df = load_data()
 
     student = df[df["Student_ID"] == student_id]
 
     if student.empty:
-        return {"message": "Student not found"}
+        return "<h3>Result not found</h3>"
 
-    return student.to_dict(orient="records")
+    s = student.iloc[0]
+
+    return f"""
+
+    <html>
+
+    <head>
+
+    <style>
+
+    body{{font-family:Arial;text-align:center;background:#f2f2f2}}
+
+    table{{margin:auto;border-collapse:collapse;background:white}}
+
+    td,th{{padding:10px;border:1px solid #ddd}}
+
+    </style>
+
+    </head>
+
+    <body>
+
+    <h2>Student Result</h2>
+
+    <table>
+
+    <tr><th>Roll Number</th><td>{s.Student_ID}</td></tr>
+
+    <tr><th>Total</th><td>{s.Total}</td></tr>
+
+    <tr><th>Percentage</th><td>{s.Percentage}%</td></tr>
+
+    <tr><th>Division</th><td>{s.Division}</td></tr>
+
+    </table>
+
+    <br>
+
+    <a href="/">Search Another</a>
+
+    </body>
+
+    </html>
+
+    """
