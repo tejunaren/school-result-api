@@ -5,10 +5,15 @@ from num2words import num2words
 
 app = FastAPI()
 
+# Google Sheet CSV URL
+CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkc1iWTYEe46zw15JHVii4vFSaackYx-bsveBu4IBdsdtaB6zGsh7P0v0aIyWWfWas9CEUbA9VI5IK/pub?output=csv"
+
 
 def load_data():
 
-    df = pd.read_csv("data.csv")
+    df = pd.read_csv(CSV_URL)
+
+    df.columns = df.columns.str.strip()
 
     subjects = [
         "Telugu",
@@ -19,10 +24,15 @@ def load_data():
         "Social_Studies"
     ]
 
+    # convert to numbers
+    df[subjects] = df[subjects].apply(pd.to_numeric, errors="coerce").fillna(0)
+
     df["Total"] = df[subjects].sum(axis=1)
 
     df["Percentage"] = (df["Total"] / 600 * 100).round(2)
 
+
+    # PASS / FAIL
     def result_status(row):
 
         for sub in subjects:
@@ -36,6 +46,7 @@ def load_data():
     df["Result"] = df.apply(result_status, axis=1)
 
 
+    # Division
     def division(total):
 
         if total >= 360:
@@ -57,6 +68,7 @@ def load_data():
 
 
 
+# Search page
 @app.get("/", response_class=HTMLResponse)
 def search():
 
@@ -121,6 +133,7 @@ def search():
 
 
 
+# Result page
 @app.post("/result", response_class=HTMLResponse)
 def result(roll_no: int = Form(...)):
 
