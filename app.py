@@ -7,6 +7,7 @@ app = FastAPI()
 
 CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkc1iWTYEe46zw15JHVii4vFSaackYx-bsveBu4IBdsdtaB6zGsh7P0v0aIyWWfWas9CEUbA9VI5IK/pub?output=csv"
 
+
 def load_data():
 
     df = pd.read_csv(CSV_URL)
@@ -29,11 +30,9 @@ def load_data():
     df["Percentage"] = (df["Total"] / 600 * 100).round(2)
 
 
-    # PASS FAIL
     def result_status(row):
 
         for sub in subjects:
-
             if row[sub] < 35:
                 return "FAIL"
 
@@ -43,7 +42,6 @@ def load_data():
     df["Result"] = df.apply(result_status, axis=1)
 
 
-    # Division
     def division(total, result):
 
         if result == "FAIL":
@@ -58,10 +56,10 @@ def load_data():
         elif total >= 195:
             return "THIRD DIVISION"
 
+
     df["Division"] = df.apply(lambda x: division(x["Total"], x["Result"]), axis=1)
 
     return df
-
 
 
 # SEARCH PAGE
@@ -74,54 +72,33 @@ def search():
 
 <head>
 
-<title>Student Result</title>
-
 <style>
 
 body{
-
 font-family:Arial;
-
 background:#f2f2f2;
-
 display:flex;
-
 justify-content:center;
-
 align-items:center;
-
 height:100vh;
-
 }
 
 .box{
-
 background:white;
-
 padding:40px;
-
 border:1px solid black;
-
 text-align:center;
-
 }
 
 input{
-
 padding:10px;
-
 font-size:16px;
-
 width:250px;
-
 }
 
 button{
-
 padding:10px 20px;
-
 margin-top:15px;
-
 }
 
 </style>
@@ -153,7 +130,6 @@ margin-top:15px;
 """
 
 
-
 # RESULT PAGE
 @app.post("/result", response_class=HTMLResponse)
 def result(roll_no: int = Form(...)):
@@ -163,7 +139,6 @@ def result(roll_no: int = Form(...)):
     student = df[df["Roll_NO"] == roll_no]
 
     if student.empty:
-
         return "<h3>Result not found</h3>"
 
     s = student.iloc[0]
@@ -207,9 +182,6 @@ def result(roll_no: int = Form(...)):
 """
 
 
-    total_words = num2words(int(s.Total)).title()
-
-
     return f"""
 
 <html>
@@ -218,133 +190,132 @@ def result(roll_no: int = Form(...)):
 
 <style>
 
-body{{
-
+body{
 font-family:Times New Roman;
-
 background:white;
+}
 
-}}
-
-.page{{
-
+.page{
 width:210mm;
-
 min-height:297mm;
-
 margin:auto;
-
 padding:40px;
-
 border:2px solid black;
+}
 
-}}
+.header{
+display:flex;
+align-items:center;
+border-bottom:1px solid black;
+padding-bottom:10px;
+}
 
-.header{{
+.logo{
+width:80px;
+margin-right:15px;
+}
 
-text-align:center;
+.school-details{
+line-height:24px;
+}
 
-line-height:28px;
-
-margin-bottom:20px;
-
-}}
-
-.logo{{
-
-width:70px;
-
-}}
-
-.title{{
-
-font-size:18px;
-
+.school-name{
+font-size:20pt;
 font-weight:bold;
+}
 
-margin-top:10px;
+.school-address{
+font-size:14pt;
+}
 
-}}
-
-.exam{{
-
-font-size:14px;
-
-margin-top:5px;
-
-}}
-
-.info{{
-
-margin-top:20px;
-
-line-height:28px;
-
-}}
-
-.photo{{
-
-float:right;
-
-width:110px;
-
-height:130px;
-
-border:1px solid black;
-
-margin-top:-120px;
-
-}}
-
-.photo img{{
-
-width:100%;
-
-height:100%;
-
-object-fit:cover;
-
-}}
-
-table{{
-
-width:100%;
-
-border-collapse:collapse;
-
-margin-top:30px;
-
-}}
-
-td,th{{
-
-border:1px solid black;
-
-padding:8px;
-
-font-size:14px;
-
-}}
-
-.print-btn{{
-
-margin-top:30px;
-
+.title{
 text-align:center;
+margin-top:15px;
+font-size:16pt;
+font-weight:bold;
+}
 
-}}
+.exam{
+text-align:center;
+margin-top:5px;
+font-size:13pt;
+}
 
-button{{
+.info{
+margin-top:25px;
+line-height:28px;
+font-size:13pt;
+}
 
-padding:10px 20px;
+.photo{
+position:absolute;
+right:60px;
+top:220px;
+width:110px;
+height:130px;
+border:1px solid black;
+}
 
-}}
+.photo img{
+width:100%;
+height:100%;
+object-fit:cover;
+}
 
-@media print{{
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:30px;
+font-size:13pt;
+}
 
-button{{display:none;}}
+td,th{
+border:1px solid black;
+padding:8px;
+}
 
-}}
+.result-box{
+text-align:center;
+margin-top:30px;
+font-size:16pt;
+}
+
+.pass{
+color:green;
+font-weight:bold;
+}
+
+.fail{
+color:red;
+font-weight:bold;
+}
+
+.division{
+color:blue;
+font-weight:bold;
+}
+
+.bottom{
+text-align:center;
+margin-top:20px;
+}
+
+button{
+padding:8px 20px;
+font-size:14px;
+}
+
+a{
+display:block;
+margin-top:15px;
+font-size:14px;
+}
+
+@media print{
+button,a{
+display:none;
+}
+}
 
 </style>
 
@@ -354,14 +325,30 @@ button{{display:none;}}
 
 <div class="page">
 
-
 <div class="header">
 
-<img class="logo" src="{s.School_Logo_URL}"><br>
+<img class="logo"
+src="{s.School_Logo_URL}"
+onerror="this.src='https://img.icons8.com/color/96/school.png'">
 
-<b>{s.School_Name}</b><br>
+<div class="school-details">
+
+<div class="school-name">
+
+{s.School_Name}
+
+</div>
+
+<div class="school-address">
 
 {s.School_Address}
+
+</div>
+
+</div>
+
+</div>
+
 
 <div class="title">
 
@@ -375,31 +362,28 @@ SUMMATIVE EXAMINATIONS
 
 </div>
 
-</div>
-
-
 
 <div class="info">
 
-Roll No : {s.Roll_NO}<br>
+Roll No        : {s.Roll_NO}<br>
 
-Student Name : {s.Student_Name}<br>
+Student Name   : {s.Student_Name}<br>
 
-Father's Name : {s.Father_Name}<br>
+Father's Name  : {s.Father_Name}<br>
 
-Mother's Name : {s.Mother_Name}<br>
+Mother's Name  : {s.Mother_Name}<br>
 
-Grade : {s.Grade}<br>
+Grade          : {s.Grade}<br>
 
-Date of Birth : {s.Date_of_Birth}
+Date of Birth  : {s.Date_of_Birth}
 
 </div>
-
 
 
 <div class="photo">
 
-<img src="{s.Photo_URL}">
+<img src="{s.Photo_URL}"
+onerror="this.src='https://via.placeholder.com/110x130'">
 
 </div>
 
@@ -419,10 +403,7 @@ Date of Birth : {s.Date_of_Birth}
 
 </tr>
 
-
 {rows}
-
-
 
 <tr>
 
@@ -432,24 +413,43 @@ Date of Birth : {s.Date_of_Birth}
 
 <th>{s.Total}</th>
 
-<th>{total_words}</th>
+<th>{num2words(int(s.Total)).title()}</th>
 
 </tr>
 
 </table>
 
 
+
+<div class="result-box">
+
+Results :
+
+<span class="{'pass' if s.Result=='PASS' else 'fail'}">
+
+{s.Result}
+
+</span>
+
 <br><br>
 
-Results : {s.Result}<br><br>
+Division :
 
-Division : {s.Division}
+<span class="division">
+
+{s.Division}
+
+</span>
+
+</div>
 
 
 
-<div class="print-btn">
+<div class="bottom">
 
 <button onclick="window.print()">Print</button>
+
+<a href="/">Search Another</a>
 
 </div>
 
