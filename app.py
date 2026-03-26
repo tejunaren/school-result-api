@@ -5,9 +5,7 @@ from num2words import num2words
 
 app = FastAPI()
 
-# Google Sheet CSV URL
 CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkc1iWTYEe46zw15JHVii4vFSaackYx-bsveBu4IBdsdtaB6zGsh7P0v0aIyWWfWas9CEUbA9VI5IK/pub?output=csv"
-
 
 def load_data():
 
@@ -24,7 +22,6 @@ def load_data():
         "Social_Studies"
     ]
 
-    # convert to numbers
     df[subjects] = df[subjects].apply(pd.to_numeric, errors="coerce").fillna(0)
 
     df["Total"] = df[subjects].sum(axis=1)
@@ -32,7 +29,7 @@ def load_data():
     df["Percentage"] = (df["Total"] / 600 * 100).round(2)
 
 
-    # PASS / FAIL
+    # PASS FAIL
     def result_status(row):
 
         for sub in subjects:
@@ -47,7 +44,10 @@ def load_data():
 
 
     # Division
-    def division(total):
+    def division(total, result):
+
+        if result == "FAIL":
+            return "-"
 
         if total >= 360:
             return "FIRST DIVISION"
@@ -58,82 +58,103 @@ def load_data():
         elif total >= 195:
             return "THIRD DIVISION"
 
-        else:
-            return "FAIL"
-
-
-    df["Division"] = df["Total"].apply(division)
+    df["Division"] = df.apply(lambda x: division(x["Total"], x["Result"]), axis=1)
 
     return df
 
 
 
-# Search page
+# SEARCH PAGE
 @app.get("/", response_class=HTMLResponse)
 def search():
 
     return """
 
-    <html>
+<html>
 
-    <head>
+<head>
 
-    <title>Student Result</title>
+<title>Student Result</title>
 
-    <style>
+<style>
 
-    body{
-    font-family:Arial;
-    text-align:center;
-    margin-top:120px;
-    background:#f2f2f2;
-    }
+body{
 
-    input{
-    padding:12px;
-    width:250px;
-    font-size:16px;
-    }
+font-family:Arial;
 
-    button{
-    padding:12px;
-    background:#2c7be5;
-    color:white;
-    border:none;
-    font-size:16px;
-    }
+background:#f2f2f2;
 
-    </style>
+display:flex;
 
-    </head>
+justify-content:center;
 
-    <body>
+align-items:center;
 
-    <h2>SCHOOL EXAM RESULT</h2>
+height:100vh;
 
-    <form action="/result" method="post">
+}
 
-    Enter Roll Number
+.box{
 
-    <br><br>
+background:white;
 
-    <input name="roll_no" required>
+padding:40px;
 
-    <br><br>
+border:1px solid black;
 
-    <button>Search</button>
+text-align:center;
 
-    </form>
+}
 
-    </body>
+input{
 
-    </html>
+padding:10px;
 
-    """
+font-size:16px;
+
+width:250px;
+
+}
+
+button{
+
+padding:10px 20px;
+
+margin-top:15px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h3>STUDENT RESULT</h3>
+
+<form action="/result" method="post">
+
+<input name="roll_no" placeholder="Enter Roll Number" required>
+
+<br><br>
+
+<button>Search</button>
+
+</form>
+
+</div>
+
+</body>
+
+</html>
+
+"""
 
 
 
-# Result page
+# RESULT PAGE
 @app.post("/result", response_class=HTMLResponse)
 def result(roll_no: int = Form(...)):
 
@@ -149,12 +170,19 @@ def result(roll_no: int = Form(...)):
 
 
     subjects = [
+
         ("FIRST LANGUAGE (TELUGU)", s.Telugu),
+
         ("SECOND LANGUAGE (HINDI)", s.Hindi),
+
         ("THIRD LANGUAGE (ENGLISH)", s.English),
+
         ("MATHEMATICS", s.Mathematics),
+
         ("GENERAL SCIENCE", s.Science),
+
         ("SOCIAL STUDIES", s.Social_Studies)
+
     ]
 
 
@@ -162,27 +190,24 @@ def result(roll_no: int = Form(...)):
 
     for subject, mark in subjects:
 
-        color = "red" if mark < 35 else "black"
-
         rows += f"""
 
-        <tr>
+<tr>
 
-        <td>{subject}</td>
+<td>{subject}</td>
 
-        <td style="color:{color}">{mark}</td>
+<td>100</td>
 
-        <td>{num2words(int(mark)).title()}</td>
+<td>{mark}</td>
 
-        </tr>
+<td>{num2words(int(mark)).title()}</td>
 
-        """
+</tr>
+
+"""
 
 
     total_words = num2words(int(s.Total)).title()
-
-    result_color = "green" if s.Result == "PASS" else "red"
-
 
 
     return f"""
@@ -194,66 +219,130 @@ def result(roll_no: int = Form(...)):
 <style>
 
 body{{
-font-family:Arial;
-background:#f2f2f2;
+
+font-family:Times New Roman;
+
+background:white;
+
 }}
 
-.container{{
-width:750px;
+.page{{
+
+width:210mm;
+
+min-height:297mm;
+
 margin:auto;
-background:white;
+
 padding:40px;
+
+border:2px solid black;
+
+}}
+
+.header{{
+
+text-align:center;
+
+line-height:28px;
+
+margin-bottom:20px;
+
+}}
+
+.logo{{
+
+width:70px;
+
 }}
 
 .title{{
-text-align:center;
-font-size:20px;
+
+font-size:18px;
+
 font-weight:bold;
+
+margin-top:10px;
+
+}}
+
+.exam{{
+
+font-size:14px;
+
+margin-top:5px;
+
 }}
 
 .info{{
+
 margin-top:20px;
-line-height:30px;
+
+line-height:28px;
+
+}}
+
+.photo{{
+
+float:right;
+
+width:110px;
+
+height:130px;
+
+border:1px solid black;
+
+margin-top:-120px;
+
+}}
+
+.photo img{{
+
+width:100%;
+
+height:100%;
+
+object-fit:cover;
+
 }}
 
 table{{
+
 width:100%;
+
 border-collapse:collapse;
-margin-top:20px;
+
+margin-top:30px;
+
 }}
 
 td,th{{
+
 border:1px solid black;
+
 padding:8px;
-}}
 
-th{{
-background:#eee;
-}}
+font-size:14px;
 
-.result{{
-text-align:center;
-margin-top:20px;
 }}
 
 .print-btn{{
+
+margin-top:30px;
+
 text-align:center;
-margin-top:25px;
+
 }}
 
 button{{
+
 padding:10px 20px;
-background:#28a745;
-color:white;
-border:none;
-cursor:pointer;
+
 }}
 
-@media print {{
+@media print{{
 
-button{{
-display:none;
-}}
+button{{display:none;}}
 
 }}
 
@@ -263,7 +352,16 @@ display:none;
 
 <body>
 
-<div class="container">
+<div class="page">
+
+
+<div class="header">
+
+<img class="logo" src="{s.School_Logo_URL}"><br>
+
+<b>{s.School_Name}</b><br>
+
+{s.School_Address}
 
 <div class="title">
 
@@ -271,17 +369,40 @@ MEMORANDUM OF SUBJECT-WISE MARKS
 
 </div>
 
-<div class="info">
+<div class="exam">
 
-<b>ROLL NUMBER :</b> {s.Roll_NO} <br>
-
-<b>CANDIDATE NAME :</b> {s.Student_Name} <br>
-
-<b>SCHOOL NAME :</b> {s.School_Name} <br>
-
-<b>DATE OF BIRTH :</b> {s.Date_of_Birth}
+SUMMATIVE EXAMINATIONS
 
 </div>
+
+</div>
+
+
+
+<div class="info">
+
+Roll No : {s.Roll_NO}<br>
+
+Student Name : {s.Student_Name}<br>
+
+Father's Name : {s.Father_Name}<br>
+
+Mother's Name : {s.Mother_Name}<br>
+
+Grade : {s.Grade}<br>
+
+Date of Birth : {s.Date_of_Birth}
+
+</div>
+
+
+
+<div class="photo">
+
+<img src="{s.Photo_URL}">
+
+</div>
+
 
 
 <table>
@@ -290,18 +411,24 @@ MEMORANDUM OF SUBJECT-WISE MARKS
 
 <th>SUBJECT</th>
 
-<th>MARKS IN FIGURES</th>
+<th>MAX MARKS</th>
+
+<th>MARKS SECURED</th>
 
 <th>MARKS IN WORDS</th>
 
 </tr>
 
+
 {rows}
+
 
 
 <tr>
 
 <th>GRAND TOTAL</th>
+
+<th>600</th>
 
 <th>{s.Total}</th>
 
@@ -312,41 +439,20 @@ MEMORANDUM OF SUBJECT-WISE MARKS
 </table>
 
 
-<div class="result">
+<br><br>
 
-<h2 style="color:{result_color}">
+Results : {s.Result}<br><br>
 
-RESULT : {s.Result}
+Division : {s.Division}
 
-</h2>
-
-<h3>
-
-DIVISION : {s.Division}
-
-</h3>
-
-</div>
 
 
 <div class="print-btn">
 
-<button onclick="window.print()">
-
-Print Result
-
-</button>
+<button onclick="window.print()">Print</button>
 
 </div>
 
-
-<br>
-
-<div style="text-align:center">
-
-<a href="/">Search Another</a>
-
-</div>
 
 </div>
 
