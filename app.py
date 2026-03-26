@@ -49,10 +49,8 @@ def load_data():
 
         if total >= 360:
             return "FIRST DIVISION"
-
         elif total >= 300:
             return "SECOND DIVISION"
-
         elif total >= 195:
             return "THIRD DIVISION"
 
@@ -62,7 +60,7 @@ def load_data():
     return df
 
 
-# SEARCH PAGE
+
 @app.get("/", response_class=HTMLResponse)
 def search():
 
@@ -70,46 +68,9 @@ def search():
 
 <html>
 
-<head>
+<body style="font-family:Arial;text-align:center;margin-top:100px">
 
-<style>
-
-body{
-font-family:Arial;
-background:#f2f2f2;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-}
-
-.box{
-background:white;
-padding:40px;
-border:1px solid black;
-text-align:center;
-}
-
-input{
-padding:10px;
-font-size:16px;
-width:250px;
-}
-
-button{
-padding:10px 20px;
-margin-top:15px;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="box">
-
-<h3>STUDENT RESULT</h3>
+<h2>Student Result</h2>
 
 <form action="/result" method="post">
 
@@ -121,8 +82,6 @@ margin-top:15px;
 
 </form>
 
-</div>
-
 </body>
 
 </html>
@@ -130,7 +89,7 @@ margin-top:15px;
 """
 
 
-# RESULT PAGE
+
 @app.post("/result", response_class=HTMLResponse)
 def result(roll_no: int = Form(...)):
 
@@ -147,15 +106,10 @@ def result(roll_no: int = Form(...)):
     subjects = [
 
         ("FIRST LANGUAGE (TELUGU)", s.Telugu),
-
         ("SECOND LANGUAGE (HINDI)", s.Hindi),
-
         ("THIRD LANGUAGE (ENGLISH)", s.English),
-
         ("MATHEMATICS", s.Mathematics),
-
         ("GENERAL SCIENCE", s.Science),
-
         ("SOCIAL STUDIES", s.Social_Studies)
 
     ]
@@ -166,19 +120,12 @@ def result(roll_no: int = Form(...)):
     for subject, mark in subjects:
 
         rows += f"""
-
 <tr>
-
 <td>{subject}</td>
-
 <td>100</td>
-
 <td>{mark}</td>
-
 <td>{num2words(int(mark)).title()}</td>
-
 </tr>
-
 """
 
 
@@ -190,132 +137,82 @@ def result(roll_no: int = Form(...)):
 
 <style>
 
-body{
-font-family:Times New Roman;
-background:white;
-}
-
-.page{
+.page{{
 width:210mm;
 min-height:297mm;
 margin:auto;
 padding:40px;
 border:2px solid black;
-}
+font-family:Times New Roman;
+}}
 
-.header{
+.header{{
 display:flex;
 align-items:center;
 border-bottom:1px solid black;
 padding-bottom:10px;
-}
+}}
 
-.logo{
+.logo{{
 width:80px;
 margin-right:15px;
-}
+}}
 
-.school-details{
-line-height:24px;
-}
-
-.school-name{
+.school-name{{
 font-size:20pt;
 font-weight:bold;
-}
+}}
 
-.school-address{
+.school-address{{
 font-size:14pt;
-}
+}}
 
-.title{
+.title{{
 text-align:center;
-margin-top:15px;
 font-size:16pt;
 font-weight:bold;
-}
+margin-top:15px;
+}}
 
-.exam{
+.exam{{
 text-align:center;
-margin-top:5px;
 font-size:13pt;
-}
+}}
 
-.info{
-margin-top:25px;
-line-height:28px;
-font-size:13pt;
-}
-
-.photo{
+.photo{{
 position:absolute;
-right:60px;
-top:220px;
+right:80px;
+top:200px;
 width:110px;
 height:130px;
 border:1px solid black;
-}
+}}
 
-.photo img{
+.photo img{{
 width:100%;
 height:100%;
 object-fit:cover;
-}
+}}
 
-table{
+table{{
 width:100%;
 border-collapse:collapse;
 margin-top:30px;
-font-size:13pt;
-}
+}}
 
-td,th{
+td,th{{
 border:1px solid black;
 padding:8px;
-}
+}}
 
-.result-box{
+.result{{
 text-align:center;
-margin-top:30px;
+margin-top:25px;
 font-size:16pt;
-}
+}}
 
-.pass{
-color:green;
-font-weight:bold;
-}
-
-.fail{
-color:red;
-font-weight:bold;
-}
-
-.division{
-color:blue;
-font-weight:bold;
-}
-
-.bottom{
-text-align:center;
-margin-top:20px;
-}
-
-button{
-padding:8px 20px;
-font-size:14px;
-}
-
-a{
-display:block;
-margin-top:15px;
-font-size:14px;
-}
-
-@media print{
-button,a{
-display:none;
-}
-}
+.pass{{color:green;font-weight:bold;}}
+.fail{{color:red;font-weight:bold;}}
 
 </style>
 
@@ -331,19 +228,11 @@ display:none;
 src="{s.School_Logo_URL}"
 onerror="this.src='https://img.icons8.com/color/96/school.png'">
 
-<div class="school-details">
+<div>
 
-<div class="school-name">
+<div class="school-name">{s.School_Name}</div>
 
-{s.School_Name}
-
-</div>
-
-<div class="school-address">
-
-{s.School_Address}
-
-</div>
+<div class="school-address">{s.School_Address}</div>
 
 </div>
 
@@ -363,7 +252,7 @@ SUMMATIVE EXAMINATIONS
 </div>
 
 
-<div class="info">
+<br>
 
 Roll No        : {s.Roll_NO}<br>
 
@@ -377,7 +266,6 @@ Grade          : {s.Grade}<br>
 
 Date of Birth  : {s.Date_of_Birth}
 
-</div>
 
 
 <div class="photo">
@@ -394,12 +282,9 @@ onerror="this.src='https://via.placeholder.com/110x130'">
 <tr>
 
 <th>SUBJECT</th>
-
 <th>MAX MARKS</th>
-
-<th>MARKS SECURED</th>
-
-<th>MARKS IN WORDS</th>
+<th>MARKS</th>
+<th>WORDS</th>
 
 </tr>
 
@@ -408,11 +293,8 @@ onerror="this.src='https://via.placeholder.com/110x130'">
 <tr>
 
 <th>GRAND TOTAL</th>
-
 <th>600</th>
-
 <th>{s.Total}</th>
-
 <th>{num2words(int(s.Total)).title()}</th>
 
 </tr>
@@ -421,7 +303,7 @@ onerror="this.src='https://via.placeholder.com/110x130'">
 
 
 
-<div class="result-box">
+<div class="result">
 
 Results :
 
@@ -431,27 +313,24 @@ Results :
 
 </span>
 
-<br><br>
+<br>
 
-Division :
-
-<span class="division">
-
-{s.Division}
-
-</span>
+Division : {s.Division}
 
 </div>
 
 
+<br><br>
 
-<div class="bottom">
+<center>
 
 <button onclick="window.print()">Print</button>
 
+<br><br>
+
 <a href="/">Search Another</a>
 
-</div>
+</center>
 
 
 </div>
